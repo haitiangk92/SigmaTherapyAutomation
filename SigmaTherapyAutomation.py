@@ -2,15 +2,14 @@ from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 import time
 from twilio.rest import Client
-from MyVariables import Variables #Personal Module to manage personal information
+from os import environ as env #Using environment variables
 
 FIRST_PASS = True #Keeping track of execution order
-vars = Variables().vars 
 
-driver = webdriver.Chrome(vars['CHROME_DRIVER'])
+driver = webdriver.Chrome(env['CHROME_DRIVER'])
 driver.maximize_window()
 
-SIGMA_URL = vars['SIGMA_URL']
+SIGMA_URL = env['SIGMA_URL']
 outFile = '' #Declaring the variable for the output file so its in the global scope
 
 # Class for keeping a record for every kind of therapy
@@ -25,9 +24,9 @@ class TherapyRecord():
 # Instantiaing the driver and setting up the system for data
 def inititalize():
     global outFile
-    account_Code = vars['MOMS_ACCT']
-    users_Name = vars['MOMS_USERNAME']
-    users_RawPassword = vars['MOMS_PASSWORD']
+    account_Code = env['MOMS_ACCT']
+    users_Name = env['MOMS_USERNAME']
+    users_RawPassword = env['MOMS_PASSWORD']
     
     driver.get(SIGMA_URL) #Setting the url to the driver
     
@@ -63,7 +62,6 @@ def inititalize():
             print(ex)
             quit() #Quit if there is an error creating the file
 
-
 # Takes two dates strings and compares them. 
 #
 # Returns the most recent date
@@ -89,14 +87,15 @@ def find_newer_date(str1, str2):
 
 #Sends an error text message to me 
 def sendErrorText(theMessage):
-    client = Client(vars['TWILIO_SID'], vars['TWILIO_TOKEN'])
+    client = Client(env['TWILIO_SID'], env['TWILIO_TOKEN'])
 
     client.messages.create(
-        to = vars['MY_CELL'],
-        from_ = vars['TWILIO_NUMBER'],
+        to = env['MY_CELL'],
+        from_ = env['TWILIO_NUMBER'],
         body = str(theMessage)
     )        
 
+#Gets the history record for a patient during a specific date range
 def create_record(last,first,starting,ending):
     global FIRST_PASS #Gets access to change global varial
 
@@ -196,6 +195,7 @@ def create_record(last,first,starting,ending):
     
     return search_history(last,first,starting,ending)
 
+#Returns the history record for a patient during a specific date range
 def search_history(last,first,starting, ending): 
     #Switching the focus of the driver to html document for the Patient History Info Frame   
     info_frame = driver.find_element_by_name('Main')
@@ -289,7 +289,6 @@ def writeOutResults(params, results):
     print(out_line) #Debugging Line
     outFile.write(out_line) #Writing to the output file
 
-#Main function
 if __name__ == '__main__':
     while True: #Taking in and verifying the input type
         in_type = int(input('Enter the input type.\nSingle Patient: 1\nList of Patients: 2\n'))
